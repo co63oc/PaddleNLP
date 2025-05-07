@@ -52,7 +52,7 @@ class _DispatchManager(ABC):
         pass
 
     @abstractmethod
-    def get_dispached_metadata(self) -> paddle.Tensor:
+    def get_dispatched_metadata(self) -> paddle.Tensor:
         """Get the metadata of the dispatched hidden_states."""
         pass
 

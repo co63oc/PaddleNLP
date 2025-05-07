@@ -51,12 +51,11 @@ from paddle.common_ops_import import convert_dtype
 from paddle.nn import Layer
 from requests.exceptions import HTTPError
 
+from paddlenlp.transformers.aistudio_utils import aistudio_download
+from paddlenlp.utils.download import resolve_file_path
 from paddlenlp.utils.env import HF_CACHE_HOME, MODEL_HOME
 from paddlenlp.utils.import_utils import import_module
 from paddlenlp.utils.log import logger
-
-from ..utils.download import resolve_file_path
-from .aistudio_utils import aistudio_download
 
 HUGGINGFACE_CO_RESOLVE_ENDPOINT = "https://huggingface.co"
 

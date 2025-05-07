@@ -320,3 +320,4 @@ from .xlm_roberta.configuration import *
 from .yuan import *
 from .llm_embed import *
 from .nv_embed import *
+from .t5 import *
