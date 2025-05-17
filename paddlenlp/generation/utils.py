@@ -418,6 +418,16 @@ class GenerationMixin(object):
 
         input_ids = paddle.gather(input_ids, index)
 
+        def _expand_dict_for_generation(dict_to_expand):
+            for key in dict_to_expand:
+                if (
+                    key != "cache_position"
+                    and dict_to_expand[key] is not None
+                    and isinstance(dict_to_expand[key], paddle.Tensor)
+                ):
+                    dict_to_expand[key] = paddle.gather(dict_to_expand[key], index)
+            return dict_to_expand
+
         if attention_mask is not None:
             model_kwargs["attention_mask"] = paddle.gather(attention_mask, index)
 
@@ -435,7 +445,10 @@ class GenerationMixin(object):
 
         if "encoder_output" in model_kwargs and model_kwargs["encoder_output"] is not None:
             encoder_output = model_kwargs["encoder_output"]
-            model_kwargs["encoder_output"] = paddle.gather(encoder_output, index)
+            if isinstance(encoder_output, paddle.Tensor):
+                model_kwargs["encoder_output"] = paddle.gather(encoder_output, index)
+            else:
+                model_kwargs["encoder_output"] = _expand_dict_for_generation(encoder_output)
 
         if "role_ids" in model_kwargs and model_kwargs["role_ids"] is not None:
             role_ids = model_kwargs["role_ids"]
@@ -517,7 +530,9 @@ class GenerationMixin(object):
         scores = paddle.where(unfinished_flag, unfinished_scores, scores)
         return scores
 
-    def prepare_encoder_decoder_kwargs_for_generation(self, input_ids, model_kwargs):
+    def prepare_encoder_decoder_kwargs_for_generation(
+        self, input_ids, model_kwargs, model_input_name: Optional[str] = None
+    ):
         if "encoder_output" not in model_kwargs:
             # retrieve encoder hidden states
             encoder = self.get_encoder()
@@ -532,7 +547,12 @@ class GenerationMixin(object):
             if "inputs_embeds" in encoder_kwargs:
                 model_kwargs["encoder_output"] = encoder(**encoder_kwargs)
             else:
-                model_kwargs["encoder_output"] = encoder(input_ids=input_ids, **encoder_kwargs)
+                if hasattr(self, "main_input_name"):
+                    model_input_name = model_input_name if model_input_name is not None else self.main_input_name
+                    encoder_kwargs[model_input_name] = input_ids
+                    model_kwargs["encoder_output"] = encoder(**encoder_kwargs)
+                else:
+                    model_kwargs["encoder_output"] = encoder(input_ids=input_ids, **encoder_kwargs)
         return model_kwargs
 
     def prepare_decoder_input_ids_for_generation(self, input_ids, decoder_start_token_id=None, bos_token_id=None):
