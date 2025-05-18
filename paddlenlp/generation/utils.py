@@ -1651,6 +1651,8 @@ class GenerationMixin(object):
             pad_token_id=pad_token_id,
             eos_token_id=eos_token_id,
         )
+        if "return_pred_ids" in model_kwargs and model_kwargs["return_pred_ids"]:
+            return pred_ids
         return pred_ids[:, origin_len:] if trunc_input else input_ids, scores
 
     def group_beam_search(
